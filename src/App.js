@@ -200,6 +200,7 @@ function Bubble({ msg }) {
 }
 // ── Main App ──────────────────────────────────────────────────────────
 export default function App() {
+  const [fontsReady, setFontsReady] = useState(false) // eslint-disable-line no-unused-vars
   const [unlocked, setUnlocked]     = useState(false)
   const [pwInput, setPwInput]       = useState('')
   const [showPw, setShowPw]         = useState(false)
