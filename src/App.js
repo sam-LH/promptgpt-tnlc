@@ -20,11 +20,11 @@ function b64(buf) {
 }
 async function loadFonts() {
   const faces = [
-    { name: 'PerfectlyNineties', file: 'PerfectlyNinetiesRegular.ttf', weight: '400', style: 'normal' },
-    { name: 'PerfectlyNineties', file: 'PerfectlyNinetiesItalic.ttf',  weight: '400', style: 'italic' },
-    { name: 'AcuminPro',         file: 'AcuminProRegular.ttf',          weight: '400', style: 'normal' },
-    { name: 'AcuminPro',         file: 'AcuminProBold.ttf',             weight: '700', style: 'normal' },
-    { name: 'AcuminPro',         file: 'AcuminProBlack.ttf',            weight: '900', style: 'normal' },
+    { name: 'PerfectlyNineties', file: 'PerfectlyNineties-Regular.ttf', weight: '400', style: 'normal' },
+    { name: 'PerfectlyNineties', file: 'PerfectlyNineties-Italic.ttf',  weight: '400', style: 'italic' },
+    { name: 'AcuminPro',         file: 'AcuminPro-Regular.ttf',          weight: '400', style: 'normal' },
+    { name: 'AcuminPro',         file: 'AcuminPro-Bold.ttf',             weight: '700', style: 'normal' },
+    { name: 'AcuminPro',         file: 'AcuminPro-Black.ttf',            weight: '900', style: 'normal' },
   ]
   for (const f of faces) {
     try {
