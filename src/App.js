@@ -230,7 +230,7 @@ export default function App() {
     setMessages(prev=>[...prev,{ role:'user', content:display }])
     setAttachment(null); setInput(''); setLoading(true)
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('/.netlify/functions/chat', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:2000, system:SYSTEM_PROMPT,
           tools:[{ type:'web_search_20250305', name:'web_search' }],
