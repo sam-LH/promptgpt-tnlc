@@ -1,5 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
-import { initEngine, isReady, chat } from './llm'
+import { useState, useRef, useEffect } from 'react'
 // ── Brand Palette ────────────────────────────────────────────────────
 const C = {
   charcoal:  '#2E272A',
@@ -213,45 +212,13 @@ export default function App() {
   const [input, setInput]           = useState('')
   const [loading, setLoading]       = useState(false)
   const [attachment, setAttachment] = useState(null)
-  const [modelProgress, setModelProgress] = useState('')
-  const [modelPct, setModelPct]     = useState(0)
-  const [modelReady, setModelReady] = useState(false)
-  const pendingRef = useRef(null)
-  const bottomRef  = useRef(null)
-  const fileRef    = useRef(null)
-  const bodyStack  = "'AcuminPro','Helvetica Neue',Arial,sans-serif"
+  const bottomRef = useRef(null)
+  const fileRef   = useRef(null)
+  const bodyStack = "'AcuminPro','Helvetica Neue',Arial,sans-serif"
   useEffect(() => { loadFonts().then(() => setFontsReady(true)) }, [])
   useEffect(() => { localStorage.setItem('plap_unlocked', unlocked ? '1' : '0') }, [unlocked])
   useEffect(() => { localStorage.setItem('plap_messages', JSON.stringify(messages)) }, [messages])
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:'smooth' }) }, [messages, loading])
-  // Start downloading model on mount
-  const runPending = useCallback(async () => {
-    if (!pendingRef.current || !isReady()) return
-    const { apiMsgs } = pendingRef.current
-    pendingRef.current = null
-    try {
-      await chat(
-        apiMsgs.map(m=>({ role:m.role, content:m.content })),
-        SYSTEM_PROMPT,
-        (partial) => setMessages(prev => {
-          const copy = [...prev]
-          copy[copy.length - 1] = { role:'assistant', content: partial }
-          return copy
-        })
-      )
-    } catch { setMessages(prev => { const c=[...prev]; c[c.length-1]={role:'assistant',content:'Something went wrong. Try again.'}; return c }) }
-    setLoading(false)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    initEngine((report) => {
-      setModelProgress(report.text || '')
-      const m = report.text?.match(/(\d+)%/)
-      if (m) setModelPct(parseInt(m[1], 10))
-    })
-      .then(() => { setModelReady(true); setModelPct(100) })
-      .catch(err => setModelProgress('Failed to load model: ' + (err?.message || 'WebGPU may not be supported in this browser.')))
-  }, [])
-  useEffect(() => { if (modelReady) runPending() }, [modelReady, runPending])
   const handleFile = e => {
     const file = e.target.files[0]; if (!file) return
     const r = new FileReader()
@@ -267,25 +234,16 @@ export default function App() {
     const apiMsgs = [...messages, { role:'user', content:userContent }]
     setMessages(prev=>[...prev,{ role:'user', content:display }])
     setAttachment(null); setInput(''); setLoading(true)
-    if (!isReady()) {
-      // Model still downloading — queue message, show placeholder
-      setMessages(prev=>[...prev,{ role:'assistant', content:'Model is still downloading — hang tight, your message will be answered as soon as it\'s ready...' }])
-      pendingRef.current = { apiMsgs }
-      return
-    }
-    // Model ready — stream response
-    setMessages(prev=>[...prev,{ role:'assistant', content:'' }])
     try {
-      await chat(
-        apiMsgs.map(m=>({ role:m.role, content:m.content })),
-        SYSTEM_PROMPT,
-        (partial) => setMessages(prev => {
-          const copy = [...prev]
-          copy[copy.length - 1] = { role:'assistant', content: partial }
-          return copy
-        })
-      )
-    } catch { setMessages(prev => { const c=[...prev]; c[c.length-1]={role:'assistant',content:'Something went wrong. Try again.'}; return c }) }
+      const res = await fetch('/.netlify/functions/chat', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:2000, system:SYSTEM_PROMPT,
+          messages: apiMsgs.map(m=>({ role:m.role, content:m.content })) })
+      })
+      const data = await res.json()
+      const reply = data.content?.filter(b=>b.type==='text').map(b=>b.text).join('\n') || 'Something went wrong. Try again.'
+      setMessages(prev=>[...prev,{ role:'assistant', content:reply }])
+    } catch { setMessages(prev=>[...prev,{ role:'assistant', content:'Network error. Please try again.' }]) }
     setLoading(false)
   }
   const handleKey = e => { if (e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send() } }
@@ -333,21 +291,7 @@ export default function App() {
         <div style={{ fontFamily:bodyStack, fontWeight:900, fontSize:'clamp(32px,7vw,60px)', letterSpacing:'-0.025em', textTransform:'uppercase', color:C.charcoal, lineHeight:0.92, marginBottom:12 }}>PROMPT<br/>LIKE A PRO</div>
         <div style={{ fontFamily:bodyStack, fontWeight:700, fontSize:13, letterSpacing:'0.08em', textTransform:'uppercase', color:C.charcoal, opacity:0.6 }}>Tell it what you need. Get a prompt that actually works.</div>
       </div>
-      {!modelReady && (
-        <div style={{ background:C.charcoal, padding:'8px 16px', flexShrink:0 }}>
-          <div style={{ maxWidth:760, margin:'0 auto' }}>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4 }}>
-              <span style={{ fontFamily:bodyStack, fontSize:11, fontWeight:700, color:C.steel, letterSpacing:'0.06em', textTransform:'uppercase' }}>Loading AI model…</span>
-              <span style={{ fontFamily:bodyStack, fontSize:11, fontWeight:700, color:C.lime }}>{modelPct}%</span>
-            </div>
-            <div style={{ height:4, background:C.border, borderRadius:2, overflow:'hidden' }}>
-              <div style={{ height:'100%', background:C.lime, borderRadius:2, width:`${modelPct}%`, transition:'width 0.3s ease' }}/>
-            </div>
-            <div style={{ fontFamily:bodyStack, fontSize:10, color:C.muted, marginTop:4, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{modelProgress}</div>
-          </div>
-        </div>
-      )}
-      <div style={{ flex:1, overflowY:'auto', padding:'24px 16px', maxWidth:760, width:'100%', margin:'0 auto', boxSizing:'border-box' }}>
+<div style={{ flex:1, overflowY:'auto', padding:'24px 16px', maxWidth:760, width:'100%', margin:'0 auto', boxSizing:'border-box' }}>
         {messages.map((m,i)=><Bubble key={i} msg={m} />)}
         {loading && (
           <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
