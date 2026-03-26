@@ -202,11 +202,14 @@ function Bubble({ msg }) {
 // ── Main App ──────────────────────────────────────────────────────────
 export default function App() {
   const [fontsReady, setFontsReady] = useState(false) // eslint-disable-line no-unused-vars
-  const [unlocked, setUnlocked]     = useState(false)
+  const [unlocked, setUnlocked]     = useState(() => localStorage.getItem('plap_unlocked') === '1')
   const [pwInput, setPwInput]       = useState('')
   const [showPw, setShowPw]         = useState(false)
   const [pwError, setPwError]       = useState(false)
-  const [messages, setMessages]     = useState([{ role:'assistant', content:WELCOME }])
+  const [messages, setMessages]     = useState(() => {
+    try { const s = localStorage.getItem('plap_messages'); return s ? JSON.parse(s) : [{ role:'assistant', content:WELCOME }] }
+    catch { return [{ role:'assistant', content:WELCOME }] }
+  })
   const [input, setInput]           = useState('')
   const [loading, setLoading]       = useState(false)
   const [attachment, setAttachment] = useState(null)
@@ -218,6 +221,8 @@ export default function App() {
   const fileRef    = useRef(null)
   const bodyStack  = "'AcuminPro','Helvetica Neue',Arial,sans-serif"
   useEffect(() => { loadFonts().then(() => setFontsReady(true)) }, [])
+  useEffect(() => { localStorage.setItem('plap_unlocked', unlocked ? '1' : '0') }, [unlocked])
+  useEffect(() => { localStorage.setItem('plap_messages', JSON.stringify(messages)) }, [messages])
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:'smooth' }) }, [messages, loading])
   // Start downloading model on mount
   const runPending = useCallback(async () => {
@@ -314,7 +319,13 @@ export default function App() {
     <div style={{ minHeight:'100vh', background:C.offWhite, display:'flex', flexDirection:'column', fontFamily:bodyStack }}>
       <div style={{ background:C.charcoal, padding:'0 24px', display:'flex', alignItems:'center', justifyContent:'space-between', height:52, borderBottom:`1.25px solid ${C.border}`, flexShrink:0 }}>
         <div style={{ fontFamily:bodyStack, fontWeight:400, fontSize:14, color:C.offWhite, letterSpacing:'0.08em', textTransform:'uppercase' }}>The Next Level Club™</div>
-        <div style={{ fontFamily:bodyStack, fontWeight:700, fontSize:11, letterSpacing:'0.14em', textTransform:'uppercase', color:C.steel }}>Prompt Like A Pro</div>
+        <div style={{ display:'flex', alignItems:'center', gap:16 }}>
+          <button onClick={() => { const fresh=[{role:'assistant',content:WELCOME}]; setMessages(fresh); localStorage.setItem('plap_messages',JSON.stringify(fresh)) }}
+            style={{ background:'none', border:`1px solid ${C.border}`, borderRadius:50, padding:'4px 12px', color:C.muted, fontFamily:bodyStack, fontWeight:700, fontSize:10, letterSpacing:'0.1em', textTransform:'uppercase', cursor:'pointer' }}>
+            New chat
+          </button>
+          <div style={{ fontFamily:bodyStack, fontWeight:700, fontSize:11, letterSpacing:'0.14em', textTransform:'uppercase', color:C.steel }}>Prompt Like A Pro</div>
+        </div>
       </div>
       <div style={{ background:C.lime, padding:'32px 24px 28px', textAlign:'center', flexShrink:0 }}>
         <div style={{ fontFamily:bodyStack, fontWeight:900, fontSize:'clamp(32px,7vw,60px)', letterSpacing:'-0.025em', textTransform:'uppercase', color:C.charcoal, lineHeight:0.92, marginBottom:12 }}>PROMPT<br/>LIKE A PRO</div>
