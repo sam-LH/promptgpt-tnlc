@@ -1,6 +1,6 @@
 import { CreateMLCEngine } from '@mlc-ai/web-llm'
 
-const MODEL_ID = 'Phi-3.5-mini-instruct-q4f16_1-MLC'
+const MODEL_ID = 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC'
 
 let engine = null
 let loadingPromise = null
