@@ -11,31 +11,6 @@ const C = {
   border:    '#3E3539',
   codeBg:    '#1a1417',
 }
-// ── Font loader ───────────────────────────────────────────────────────
-function b64(buf) {
-  let s = '', b = new Uint8Array(buf), n = b.length
-  for (let i = 0; i < n; i += 8192)
-    s += String.fromCharCode(...b.subarray(i, Math.min(i + 8192, n)))
-  return btoa(s)
-}
-async function loadFonts() {
-  const faces = [
-    { name: 'PerfectlyNineties', file: 'PerfectlyNineties-Regular.ttf', weight: '400', style: 'normal' },
-    { name: 'PerfectlyNineties', file: 'PerfectlyNineties-Italic.ttf',  weight: '400', style: 'italic' },
-    { name: 'AcuminPro',         file: 'AcuminPro-Regular.ttf',          weight: '400', style: 'normal' },
-    { name: 'AcuminPro',         file: 'AcuminPro-Bold.ttf',             weight: '700', style: 'normal' },
-    { name: 'AcuminPro',         file: 'AcuminPro-Black.ttf',            weight: '900', style: 'normal' },
-  ]
-  for (const f of faces) {
-    try {
-      const res  = await fetch('/' + f.file)
-      const buf  = await res.arrayBuffer()
-      const face = new FontFace(f.name, `url(data:font/truetype;base64,${b64(buf)})`, { weight: f.weight, style: f.style })
-      await face.load()
-      document.fonts.add(face)
-    } catch(e) { /* fallback to system fonts */ }
-  }
-}
 const PASSWORD = 'promptlikeapro'
 const SYSTEM_PROMPT = `You are PromptGPT, a prompt engineering specialist for creative service providers — photographers, designers, copywriters, brand strategists, social media managers, and similar. Your job is to write optimised, ready-to-use Claude prompts that your user can paste directly into a new Claude Project's instructions field.
 When a user tells you their goal, you will write a complete project instructions prompt that:
@@ -286,7 +261,6 @@ function HelpModal({ onClose }) {
 }
 // ── Main App ──────────────────────────────────────────────────────────
 export default function App() {
-  const [fontsReady, setFontsReady] = useState(false) // eslint-disable-line no-unused-vars
   const [unlocked, setUnlocked]     = useState(() => localStorage.getItem('plap_unlocked') === '1')
   const [pwInput, setPwInput]       = useState('')
   const [showPw, setShowPw]         = useState(false)
@@ -302,7 +276,6 @@ export default function App() {
   const bottomRef = useRef(null)
   const fileRef   = useRef(null)
   const bodyStack = "'AcuminPro','Helvetica Neue',Arial,sans-serif"
-  useEffect(() => { loadFonts().then(() => setFontsReady(true)) }, [])
   useEffect(() => { localStorage.setItem('plap_unlocked', unlocked ? '1' : '0') }, [unlocked])
   useEffect(() => { localStorage.setItem('plap_messages', JSON.stringify(messages)) }, [messages])
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:'smooth' }) }, [messages, loading])
