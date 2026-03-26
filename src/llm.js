@@ -12,6 +12,7 @@ export function initEngine(onProgress) {
   loadingPromise = CreateMLCEngine(MODEL_ID, {
     initProgressCallback: (report) => onProgress?.(report),
   }).then(e => { engine = e; return e })
+    .catch(err => { loadingPromise = null; throw err })
   return loadingPromise
 }
 

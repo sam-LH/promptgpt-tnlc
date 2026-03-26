@@ -247,7 +247,9 @@ export default function App() {
       setModelProgress(report.text || '')
       const m = report.text?.match(/(\d+)%/)
       if (m) setModelPct(parseInt(m[1], 10))
-    }).then(() => { setModelReady(true); setModelPct(100) })
+    })
+      .then(() => { setModelReady(true); setModelPct(100) })
+      .catch(err => setModelProgress('Failed to load model: ' + (err?.message || 'WebGPU may not be supported in this browser.')))
   }, [])
   useEffect(() => { if (modelReady) runPending() }, [modelReady, runPending])
   const handleFile = e => {
