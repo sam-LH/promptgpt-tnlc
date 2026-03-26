@@ -198,6 +198,92 @@ function Bubble({ msg }) {
     </div>
   )
 }
+// ── Help Modal ────────────────────────────────────────────────────────
+const TIPS = [
+  {
+    label: 'Step 1 — Build your Brand Brain',
+    body: `Your Brand Brain is the foundation. It captures your ideal client, tone of voice, and offers in one place.\n\nUpload an existing Brand Brain with the paperclip, or paste it in directly. No Brand Brain yet? No problem — PromptGPT will walk you through building one, one question at a time.\n\nSave the output somewhere safe. You'll upload it to every Claude Project you build.`,
+  },
+  {
+    label: 'Step 2 — Ask for a prompt',
+    body: `Once your Brand Brain is loaded, tell PromptGPT what you need a Claude Project for. Use this formula:\n\n"I want an expert in [role/discipline], who knows my brand inside out, to help me [specific task or outcome]."\n\nExamples:\n• "I want an expert copywriter, using my brand voice, to help me write Instagram captions that convert."\n• "I want an expert sales coach, using my offers and ICP, to help me write DM follow-up scripts."\n• "I want an expert content strategist to help me plan 30 days of content from a single idea."`,
+  },
+  {
+    label: 'Not sure what you need?',
+    body: `That's fine. Tell PromptGPT to ask you questions first before writing the prompt.\n\nTry:\n"I'm not sure exactly what I need — ask me questions first, then build the prompt."\n\nPromptGPT will dig into your goal, your audience, the format, and the outcome before writing anything. The more it knows, the sharper the prompt.`,
+  },
+  {
+    label: 'Step 3 — Use the output',
+    body: `When PromptGPT gives you a prompt in a code block, that's your Claude Project instructions.\n\nHere's how to use it:\n1. Copy the prompt\n2. Go to Claude.ai → Create a new Project\n3. Paste it into the Project Instructions field\n4. Upload your Brand Brain file to the Project\n5. Start chatting — Claude now knows your brand and its job\n\nEvery conversation in that Project will stay on-brand and on-brief.`,
+  },
+  {
+    label: 'Power tips',
+    body: `Get more from every prompt:\n\n• Be specific about the output format. "Write in bullet points" or "keep each caption under 150 words" gives better results than nothing.\n\n• Mention your audience by name. If your ICP is in your Brand Brain, reference them: "write for the creatives in my audience who feel stuck."\n\n• Stack projects. Build one for captions, one for emails, one for sales calls. Each gets its own focused prompt.\n\n• Iterate. If the first prompt isn't right, tell PromptGPT what's missing. Treat it like a brief you're refining together.`,
+  },
+]
+
+function HelpModal({ onClose }) {
+  const [active, setActive] = useState(0)
+  const bodyStack = "'AcuminPro','Helvetica Neue',Arial,sans-serif"
+  const tip = TIPS[active]
+  return (
+    <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(46,39,42,0.72)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:C.offWhite, borderRadius:16, maxWidth:560, width:'100%', maxHeight:'88vh', display:'flex', flexDirection:'column', overflow:'hidden', border:`1.25px solid ${C.border}` }}>
+        {/* Header */}
+        <div style={{ background:C.charcoal, padding:'18px 20px 16px', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
+          <div>
+            <div style={{ fontFamily:bodyStack, fontWeight:900, fontSize:16, color:C.lime, letterSpacing:'-0.01em', textTransform:'uppercase' }}>How to use this</div>
+            <div style={{ fontFamily:bodyStack, fontWeight:400, fontSize:11, color:C.steel, marginTop:2, letterSpacing:'0.06em', textTransform:'uppercase' }}>Prompt Like A Pro — The Next Level Club™</div>
+          </div>
+          <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', color:C.muted, fontSize:22, lineHeight:1, padding:4 }}>×</button>
+        </div>
+        {/* Tabs */}
+        <div style={{ display:'flex', overflowX:'auto', borderBottom:`1.25px solid ${C.steel}`, flexShrink:0, background:C.offWhite }}>
+          {TIPS.map((t,i) => (
+            <button key={i} onClick={()=>setActive(i)} style={{ flexShrink:0, background:'none', border:'none', borderBottom: i===active ? `2.5px solid ${C.lime}` : '2.5px solid transparent', padding:'10px 16px', fontFamily:bodyStack, fontWeight:700, fontSize:11, letterSpacing:'0.07em', textTransform:'uppercase', color: i===active ? C.charcoal : C.muted, cursor:'pointer', whiteSpace:'nowrap' }}>
+              {String(i+1).padStart(2,'0')}
+            </button>
+          ))}
+        </div>
+        {/* Content */}
+        <div style={{ overflowY:'auto', padding:'22px 24px 24px' }}>
+          <div style={{ fontFamily:bodyStack, fontWeight:900, fontSize:15, color:C.charcoal, marginBottom:12, textTransform:'uppercase', letterSpacing:'-0.01em' }}>{tip.label}</div>
+          {tip.body.split('\n').map((line,i) => {
+            if (!line.trim()) return <div key={i} style={{ height:8 }} />
+            const isBullet = line.startsWith('•')
+            const isNum = /^\d+\./.test(line)
+            return (
+              <div key={i} style={{ fontFamily:bodyStack, fontWeight: isBullet||isNum ? 400 : 400, fontSize:14, color: C.charcoal, lineHeight:1.65, marginBottom:2, paddingLeft: isBullet||isNum ? 4 : 0 }}>
+                {isBullet ? <><span style={{ color:C.lime, fontWeight:900, marginRight:6 }}>•</span>{line.slice(1).trim()}</> : line}
+              </div>
+            )
+          })}
+          {/* Example callout on step 2 */}
+          {active === 1 && (
+            <div style={{ marginTop:16, background:C.charcoal, borderRadius:10, padding:'12px 16px', border:`1.25px solid ${C.border}` }}>
+              <div style={{ fontFamily:bodyStack, fontWeight:700, fontSize:10, letterSpacing:'0.1em', textTransform:'uppercase', color:C.lime, marginBottom:6 }}>The formula</div>
+              <div style={{ fontFamily:"'AcuminPro',monospace", fontSize:13, color:C.offWhite, lineHeight:1.6 }}>
+                "I want an expert in <span style={{color:C.lime}}>[role]</span>, using my brand, to help me <span style={{color:C.lime}}>[outcome]</span>."
+              </div>
+            </div>
+          )}
+        </div>
+        {/* Footer nav */}
+        <div style={{ borderTop:`1.25px solid ${C.steel}`, padding:'12px 20px', display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0, background:C.offWhite }}>
+          <button onClick={()=>setActive(a=>Math.max(0,a-1))} disabled={active===0}
+            style={{ background:'none', border:`1.25px solid ${active===0?C.steel:C.charcoal}`, borderRadius:50, padding:'7px 18px', fontFamily:bodyStack, fontWeight:700, fontSize:11, letterSpacing:'0.08em', textTransform:'uppercase', color:active===0?C.steel:C.charcoal, cursor:active===0?'not-allowed':'pointer' }}>
+            ← Prev
+          </button>
+          <span style={{ fontFamily:bodyStack, fontSize:11, color:C.muted }}>{active+1} / {TIPS.length}</span>
+          {active < TIPS.length-1
+            ? <button onClick={()=>setActive(a=>a+1)} style={{ background:C.lime, border:'none', borderRadius:50, padding:'7px 18px', fontFamily:bodyStack, fontWeight:900, fontSize:11, letterSpacing:'0.08em', textTransform:'uppercase', color:C.charcoal, cursor:'pointer' }}>Next →</button>
+            : <button onClick={onClose} style={{ background:C.charcoal, border:'none', borderRadius:50, padding:'7px 18px', fontFamily:bodyStack, fontWeight:900, fontSize:11, letterSpacing:'0.08em', textTransform:'uppercase', color:C.lime, cursor:'pointer' }}>Let's go →</button>
+          }
+        </div>
+      </div>
+    </div>
+  )
+}
 // ── Main App ──────────────────────────────────────────────────────────
 export default function App() {
   const [fontsReady, setFontsReady] = useState(false) // eslint-disable-line no-unused-vars
@@ -212,6 +298,7 @@ export default function App() {
   const [input, setInput]           = useState('')
   const [loading, setLoading]       = useState(false)
   const [attachment, setAttachment] = useState(null)
+  const [showHelp, setShowHelp]     = useState(false)
   const bottomRef = useRef(null)
   const fileRef   = useRef(null)
   const bodyStack = "'AcuminPro','Helvetica Neue',Arial,sans-serif"
@@ -277,9 +364,14 @@ export default function App() {
   )
   return (
     <div style={{ minHeight:'100vh', background:C.offWhite, display:'flex', flexDirection:'column', fontFamily:bodyStack }}>
+      {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
       <div style={{ background:C.charcoal, padding:'0 24px', display:'flex', alignItems:'center', justifyContent:'space-between', height:52, borderBottom:`1.25px solid ${C.border}`, flexShrink:0 }}>
         <div style={{ fontFamily:bodyStack, fontWeight:400, fontSize:14, color:C.offWhite, letterSpacing:'0.08em', textTransform:'uppercase' }}>The Next Level Club™</div>
         <div style={{ display:'flex', alignItems:'center', gap:16 }}>
+          <button onClick={() => setShowHelp(true)}
+            style={{ background:'none', border:`1px solid ${C.border}`, borderRadius:50, width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:C.steel, fontFamily:bodyStack, fontWeight:700, fontSize:13, cursor:'pointer' }}>
+            ?
+          </button>
           <button onClick={() => { const fresh=[{role:'assistant',content:WELCOME}]; setMessages(fresh); localStorage.setItem('plap_messages',JSON.stringify(fresh)) }}
             style={{ background:'none', border:`1px solid ${C.border}`, borderRadius:50, padding:'4px 12px', color:C.muted, fontFamily:bodyStack, fontWeight:700, fontSize:10, letterSpacing:'0.1em', textTransform:'uppercase', cursor:'pointer' }}>
             New chat
