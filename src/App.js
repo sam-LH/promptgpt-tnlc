@@ -259,6 +259,10 @@ function HelpModal({ onClose }) {
     </div>
   )
 }
+const DAILY_LIMIT = 3
+function getTodayKey() { return 'plap_usage_' + new Date().toISOString().slice(0,10) }
+function getUsageToday() { return parseInt(localStorage.getItem(getTodayKey()) || '0', 10) }
+function incrementUsage() { const k = getTodayKey(); localStorage.setItem(k, getUsageToday() + 1) }
 // ── Main App ──────────────────────────────────────────────────────────
 export default function App() {
   const [unlocked, setUnlocked]     = useState(() => localStorage.getItem('plap_unlocked') === '1')
@@ -273,6 +277,7 @@ export default function App() {
   const [loading, setLoading]       = useState(false)
   const [attachment, setAttachment] = useState(null)
   const [showHelp, setShowHelp]     = useState(false)
+  const [promptsUsed, setPromptsUsed] = useState(() => getUsageToday())
   const bottomRef = useRef(null)
   const fileRef   = useRef(null)
   const bodyStack = "'AcuminPro','Helvetica Neue',Arial,sans-serif"
@@ -288,6 +293,13 @@ export default function App() {
   const send = async () => {
     const text = input.trim()
     if ((!text && !attachment) || loading) return
+    if (promptsUsed >= DAILY_LIMIT) {
+      setMessages(prev=>[...prev,
+        { role:'user', content: text || (attachment ? `📎 ${attachment.name}` : '') },
+        { role:'assistant', content: `You've used all ${DAILY_LIMIT} prompts for today. Come back tomorrow — your limit resets at midnight.` }
+      ])
+      setInput(''); setAttachment(null); return
+    }
     let userContent = text
     if (attachment) userContent = `${text?text+"\n\n":''}[Attached file: ${attachment.name}]\n\n${attachment.content}`
     const display = (text||'') + (attachment?`${text?'\n\n':''}📎 ${attachment.name}`:'')
@@ -303,6 +315,10 @@ export default function App() {
       const data = await res.json()
       const reply = data.content?.filter(b=>b.type==='text').map(b=>b.text).join('\n') || 'Something went wrong. Try again.'
       setMessages(prev=>[...prev,{ role:'assistant', content:reply }])
+      if (/```/.test(reply)) {
+        incrementUsage()
+        setPromptsUsed(getUsageToday())
+      }
     } catch { setMessages(prev=>[...prev,{ role:'assistant', content:'Network error. Please try again.' }]) }
     setLoading(false)
   }
@@ -341,6 +357,9 @@ export default function App() {
       <div style={{ background:C.charcoal, padding:'0 24px', display:'flex', alignItems:'center', justifyContent:'space-between', height:52, borderBottom:`1.25px solid ${C.border}`, flexShrink:0 }}>
         <div style={{ fontFamily:bodyStack, fontWeight:400, fontSize:14, color:C.offWhite, letterSpacing:'0.08em', textTransform:'uppercase' }}>The Next Level Club™</div>
         <div style={{ display:'flex', alignItems:'center', gap:16 }}>
+          <div style={{ fontFamily:bodyStack, fontSize:10, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color: promptsUsed >= DAILY_LIMIT ? C.orange : C.muted }}>
+            {DAILY_LIMIT - promptsUsed}/{DAILY_LIMIT} prompts
+          </div>
           <button onClick={() => setShowHelp(true)}
             style={{ background:'none', border:`1px solid ${C.border}`, borderRadius:50, width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:C.steel, fontFamily:bodyStack, fontWeight:700, fontSize:13, cursor:'pointer' }}>
             ?
